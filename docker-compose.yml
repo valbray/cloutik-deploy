@@ -1,0 +1,354 @@
+version: '3.8'
+
+# Configuration globale pour la rotation des logs (Driver par défaut)
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # ==========================================
+  # 1. PROXY & SSL
+  # ==========================================
+  nginx-proxy:
+    image: registry.cloutik.app/cloutik/cloutik-proxy:${TAG:-latest}
+    container_name: cloutik-proxy
+    restart: always
+    logging: *default-logging
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - APP_DOMAIN=${ROUTE_DOMAIN}
+      - WEBFIG_DOMAIN=webfig.${ROUTE_DOMAIN}
+    volumes:
+      - certs:/etc/nginx/certs:ro
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+    networks:
+      - cloutik-net
+
+  nginx-proxy-acme:
+    image: registry.cloutik.app/cloutik/cloutik-acme:${TAG:-latest}
+    container_name: cloutik-acme
+    restart: always
+    logging: *default-logging
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DEFAULT_EMAIL=${EMAIL_SA}
+    networks:
+      - cloutik-net
+
+  # ==========================================
+  # 2. DATABASE (Démarre en premier)
+  # ==========================================
+  db:
+    image: registry.cloutik.app/cloutik/cloutik-mariadb:${TAG:-1.0}
+    container_name: cloutik-db
+    restart: always
+    logging: *default-logging
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: cloutik
+      MYSQL_USER: cloutik
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - cloutik-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      retries: 5
+
+  # ==========================================
+  # 3. VAULT (Attend DB)
+  # ==========================================
+  vault:
+    image: registry.cloutik.app/cloutik/cloutik-vault:${TAG:-1.0}
+    container_name: cloutik-vault
+    restart: unless-stopped
+    logging: *default-logging
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+      VAULT_API_ADDR: "http://vault:8200"
+      PKI_TTL: "262800h"
+      CA_COMMON_NAME: "Cloutik Root CA"
+      SERVER_CERT_TTL: "87600h"
+      CLIENT_CERT_TTL: "87600h"
+      SERVICE_TOKEN_TTL: "87600h"
+      VPN_NETWORK: ${VPN_NETWORK}
+      VPN_NETMASK: ${VPN_NETMASK}
+      VPN_NETMASK_PREFIX: ${VPN_NETMASK_PREFIX}
+      VPN_SERVER_IP: "0.0.0.0"
+      VPN_PORT: ${VPN_PORT}
+      VPN_PROTO: ${VPN_PROTO}
+      VPN_CIPHER: "BF-CBC"
+      CREATE_TEST_DATA: "false"
+    volumes:
+      - vault_file:/vault/file
+    networks:
+      - cloutik-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8200/v1/sys/health && test -f /vault/file/.tokens/openvpn_token || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
+  # ==========================================
+  # 4. OPENVPN (Attend Vault)
+  # ==========================================
+  openvpn:
+    image: registry.cloutik.app/cloutik/cloutik-openvpn:${TAG:-1.0}
+    container_name: cloutik-openvpn
+    restart: always
+    logging: *default-logging
+    ports:
+      - "${VPN_PORT:-1194}:1194/tcp"
+    expose:
+      - "80"
+    command: >
+        sh -c "iptables -I INPUT -p tcp --dport 80 -j ACCEPT &&
+              openvpn --config /etc/openvpn/openvpn.conf --route-nopull --route ${VPN_SERVER_IP} ${VPN_NETMASK}"
+    environment:
+      VIRTUAL_HOST: webfig.${ROUTE_DOMAIN},vpn.${ROUTE_DOMAIN}
+      VIRTUAL_PORT: 80
+      LETSENCRYPT_HOST: webfig.${ROUTE_DOMAIN},vpn.${ROUTE_DOMAIN}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /vault/tokens/.tokens/openvpn_token
+      VPN_SERVER_IP: ${VPN_SERVER_IP}
+      VPN_NETMASK: ${VPN_NETMASK}
+      VPN_NETMASK_PREFIX: ${VPN_NETMASK_PREFIX}
+      VPN_NETWORK: ${VPN_NETWORK}
+      VPN_PORT: ${VPN_PORT}
+      VPN_PROTO: ${VPN_PROTO}
+      RADIUS_SECRET: ${RADIUS_SECRET}
+      VPN_CLIENT_TO_CLIENT: ${VPN_CLIENT_TO_CLIENT:-false}
+    volumes:
+      - openvpn_data:/etc/openvpn
+      - vault_file:/vault/tokens:ro
+      - ./logs/openvpn:/var/log/openvpn
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+    privileged: false
+    networks:
+      - cloutik-net
+    depends_on:
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -d /sys/class/net/tun0 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+  # ==========================================
+  # 5. FREERADIUS (Attend Vault)
+  # ==========================================
+  radiusdb:
+    image: registry.cloutik.app/cloutik/cloutik-radius:${TAG:-1.0}
+    container_name: cloutik-radiusdb
+    restart: always
+    logging: *default-logging
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /vault/tokens/.tokens/radiusdb_token
+      RADIUS_SECRET: ${RADIUS_SECRET}
+      RADIUS_DEBUG: ${RADIUS_DEBUG:-false}
+    volumes:
+      - ./logs/freeradius:/var/log/freeradius
+      - vault_file:/vault/tokens:ro
+    networks:
+      - cloutik-net
+    depends_on:
+      vault:
+        condition: service_healthy
+
+  # ==========================================
+  # 6. LARAVEL APP (Attend DB & Vault)
+  # ==========================================
+  app:
+    image: registry.cloutik.app/cloutik/cloutik-app:${TAG:-1.0}
+    container_name: cloutik-app
+    restart: always
+    logging: *default-logging
+    expose:
+      - "80"
+    environment:
+      # Juste les vars critiques pour Docker/entrypoint
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS}
+      RUN_SEED: ${RUN_SEED}
+      RUN_NPM_BUILD: ${RUN_NPM_BUILD}
+      TRUST_PROXIES: ${TRUST_PROXIES}
+      VIRTUAL_HOST: ${ROUTE_DOMAIN},api.${ROUTE_DOMAIN},api-interf.${ROUTE_DOMAIN}
+      LETSENCRYPT_HOST: ${ROUTE_DOMAIN},api.${ROUTE_DOMAIN},api-interf.${ROUTE_DOMAIN}
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /vault/tokens/.tokens/cloutik_token
+    volumes:
+      - ./.env:/var/www/html/.env
+      - ./storage:/var/www/html/storage
+      - ./logs/laravel:/var/www/html/storage/logs
+      - ./logs/nginx:/var/log/nginx
+      - ./logs/supervisor:/var/log/supervisor
+      - vault_file:/vault/tokens:ro
+    networks:
+      - cloutik-net
+    depends_on:
+      db:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+      radiusdb:
+        condition: service_started
+
+  # ==========================================
+  # 7. PROFTPD
+  # ==========================================
+  proftpd:
+    image: registry.cloutik.app/cloutik/cloutik-proftpd:${TAG:-1.0}
+    container_name: cloutik-proftpd
+    restart: always
+    logging: *default-logging
+    ports:
+      - "21:21"
+      - "${FTP_PASSIVEPORTS:-30000-30599}:${FTP_PASSIVEPORTS:-30000-30599}/tcp"
+    environment:
+      DB_HOST: db
+      DB_NAME: cloutik
+      DB_USER: cloutik
+      DB_PASSWORD: ${DB_PASSWORD}
+      FTP_PASSIVEPORTS: ${FTP_PASSIVEPORTS}
+    volumes:
+      - ./storage:${FTP_BASE_DIRECTORY}/storage
+    networks:
+      - cloutik-net
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ==========================================
+  # 8. WEBFIG GATEWAY
+  # ==========================================
+  webfig-gateway:
+    image: registry.cloutik.app/cloutik/cloutik-webfig-gateway:${TAG:-1.0}
+    container_name: cloutik-webfig-gateway
+    restart: always
+    logging: *default-logging
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN_FILE: /vault/tokens/.tokens/webfig_gateway_token
+      GATEWAY_SHARED_TOKEN: ${GATEWAY_SHARED_TOKEN}
+    volumes:
+      - vault_file:/vault/tokens:ro
+    network_mode: "service:openvpn"
+    depends_on:
+      openvpn:
+        condition: service_healthy
+
+  # ==========================================
+  # 9. ELK STACK (Démarrage différé -> LA FIN)
+  # ==========================================
+  elasticsearch:
+    image: registry.cloutik.app/cloutik/cloutik-elasticsearch:${TAG:-1.0}
+    container_name: cloutik-elasticsearch
+    restart: always
+    logging: *default-logging
+    environment:
+      - "ES_JAVA_OPTS=-Xmx2g -Xms2g"
+      - "ELASTIC_USERNAME=elastic"
+      - "ELASTIC_PASSWORD=${ELASTICSEARCH_PASS}"
+      - "discovery.type=single-node"
+      - "xpack.security.enabled=true"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - cloutik-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 30s
+      retries: 5
+    # C'EST ICI QUE L'OPTIMISATION SE FAIT : IL ATTEND TOUT LE RESTE
+    depends_on:
+      app:
+        condition: service_started
+      webfig-gateway:
+        condition: service_started
+      proftpd:
+        condition: service_started
+
+  logstash:
+    image: registry.cloutik.app/cloutik/cloutik-logstash:${TAG:-1.0}
+    container_name: cloutik-logstash
+    restart: always
+    logging: *default-logging
+    ports:
+      - "5014:5014/udp"
+      - "9600:9600"
+    environment:
+      - ELASTICSEARCH_HOST=elasticsearch
+      - ELASTICSEARCH_PORT=9200
+      - ELASTICSEARCH_USER=elastic
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASS}
+      - LS_JAVA_OPTS=-Xmx1g -Xms1g
+    volumes:
+      - logstash_data:/var/lib/logstash
+    networks:
+      - cloutik-net
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+# ==========================================
+# VOLUMES
+# ==========================================
+volumes:
+  db_data:
+  vault_file:
+  openvpn_data:
+  elasticsearch_data:
+  logstash_data:
+  certs:
+  vhost:
+  html:
+  acme:
+
+# ==========================================
+# NETWORKS
+# ==========================================
+networks:
+  cloutik-net:
+    driver: bridge
