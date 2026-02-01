@@ -219,7 +219,6 @@ services:
     volumes:
       - ./.env:/var/www/html/.env
       - ./storage:/var/www/html/storage
-      - ./logs/laravel:/var/www/html/storage/logs
       - ./logs/nginx:/var/log/nginx
       - ./logs/supervisor:/var/log/supervisor
       - vault_file:/vault/tokens:ro
