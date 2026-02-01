@@ -257,6 +257,7 @@ MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
 # SUPERADMIN
 # =====================================================
 FIRST_NAME_SA=superadmin
+TIMEZONE_SA=Europe/Paris
 LAST_NAME_SA=${B_COMPANY}
 EMAIL_SA=${B_EMAIL}
 PASSWORD_SA=${B_SA_PASS}
