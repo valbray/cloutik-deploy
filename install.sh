@@ -24,14 +24,24 @@ echo "  2) Français"
 echo -e "${BLUE}====================================================${NC}"
 read -p "Choice / Choix [1-2]: " LAN_CHOICE
 
+# --- Dictionnaire de langue ---
 if [ "$LAN_CHOICE" == "2" ]; then
+    # --- FRANÇAIS ---
     L="FR"
+    
+    # Docker
+    T_DOCKER_CHECK="[1/4] Vérification de Docker..."
+    T_DOCKER_MISSING="Docker n'est pas installé. Installation automatique..."
+    T_DOCKER_ERR="L'installation de Docker a échoué."
+    T_DOCKER_OK="Docker est prêt."
+
+    # JQ
     T_JQ_MISSING="[!] 'jq' n'est pas installé."
     T_JQ_PROMPT="Voulez-vous installer 'jq' maintenant ? (Sudo requis) [y/N] : "
-    T_JQ_OS_ERR="Système non supporté automatiquement."
-
+    T_JQ_OS_ERR="Système non supporté automatiquement pour JQ."
+    
     # Base
-    T_BASE_CONFIG="--- CONFIGURATION DE BASE ---"
+    T_BASE_CONFIG="[2/4] CONFIGURATION DE BASE"
     T_DOMAIN_P="Nom de domaine (ex: docker.cloutik.app)"
     T_EMAIL_P="Email de facturation"
     T_COMPANY_P="Nom de l'entreprise"
@@ -45,38 +55,54 @@ if [ "$LAN_CHOICE" == "2" ]; then
     T_DNS_WARN="[ATTENTION] La configuration DNS semble incorrecte."
     T_DNS_CONT="Voulez-vous continuer quand même ? (o/N) : "
 
-    # Steps
-    T_STEP1_INFO="--- ÉTAPE 1 : RÉCUPÉRATION DES ACCÈS ---"
+    # Steps API
+    T_STEP1_INFO="[3/4] RÉCUPÉRATION DES ACCÈS"
     T_STEP1_DESC="Connexion au Master pour générer vos jetons..."
     T_TOKEN_VALID="--- VALIDATION DES ACCÈS ---"
     T_MAIL_SENT="Un e-mail a été envoyé à :"
     T_ALREADY_SENT="[INFO] Demande existante (Code 409). Vérifiez vos e-mails."
     T_TOKEN_DESC="Saisissez les informations reçues :"
-
     T_PARTNER_L="Partner Token"
     T_REG_USER_L="Registry User"
     T_REG_PASS_L="Registry Password"
 
-    T_STEP2_INFO="--- ÉTAPE 2 : ENREGISTREMENT ---"
+    T_STEP2_INFO="--- ENREGISTREMENT DE L'INSTANCE ---"
     T_STEP2_EXIST="[ERREUR] Cette instance existe déjà (Code 409)."
 
-    # Captcha
+    # Captcha & VPN
     T_CAPTCHA_TITLE="--- SÉCURITÉ RECAPTCHA (GOOGLE) ---"
     T_CAPTCHA_ASK="Voulez-vous activer la protection reCAPTCHA v3 ? (o/N) : "
     T_CAPTCHA_TUTO="1. Allez sur : https://www.google.com/recaptcha/admin/create\n2. Créez une clé de type 'reCAPTCHA v3'\n3. Ajoutez votre domaine : "
     T_CAPTCHA_SITE="Clé du site (Site Key)"
     T_CAPTCHA_SECRET="Clé secrète (Secret Key)"
+    T_VPN_TITLE="--- CONFIGURATION VPN ---"
 
+    # Final
+    T_FINAL_STEP="[4/4] FINALISATION"
     T_SUCCESS="FÉLICITATIONS ! Configuration terminée."
     T_ENV_LOAD="Configuration existante détectée."
+    T_START_PROMPT="Voulez-vous démarrer l'application maintenant ? [Y/n] "
+    T_START_NOW="Lancement immédiat via start.sh..."
+    T_START_LATER="Démarrage ignoré. Lancez plus tard via : ./start.sh"
+    T_START_MISSING="[ERREUR] Le script start.sh est introuvable."
+
 else
+    # --- ENGLISH ---
     L="EN"
+
+    # Docker
+    T_DOCKER_CHECK="[1/4] Checking Docker..."
+    T_DOCKER_MISSING="Docker is not installed. Installing automatically..."
+    T_DOCKER_ERR="Docker installation failed."
+    T_DOCKER_OK="Docker is ready."
+
+    # JQ
     T_JQ_MISSING="[!] 'jq' is not installed."
     T_JQ_PROMPT="Install 'jq' now? (Sudo required) [y/N] : "
-    T_JQ_OS_ERR="OS not supported."
+    T_JQ_OS_ERR="OS not supported for JQ auto-install."
 
     # Base
-    T_BASE_CONFIG="--- BASE CONFIGURATION ---"
+    T_BASE_CONFIG="[2/4] BASE CONFIGURATION"
     T_DOMAIN_P="Domain Name (e.g., docker.cloutik.app)"
     T_EMAIL_P="Billing Email"
     T_COMPANY_P="Company Name"
@@ -90,33 +116,60 @@ else
     T_DNS_WARN="[WARNING] DNS configuration seems incorrect."
     T_DNS_CONT="Do you want to continue anyway? (y/N) : "
 
-    # Steps
-    T_STEP1_INFO="--- STEP 1: ACCESS RETRIEVAL ---"
+    # Steps API
+    T_STEP1_INFO="[3/4] ACCESS RETRIEVAL"
     T_STEP1_DESC="Connecting to Master..."
     T_TOKEN_VALID="--- ACCESS VALIDATION ---"
     T_MAIL_SENT="Email sent to:"
     T_ALREADY_SENT="[INFO] Request exists (Code 409). Check your email."
     T_TOKEN_DESC="Enter received information:"
-
     T_PARTNER_L="Partner Token"
     T_REG_USER_L="Registry User"
     T_REG_PASS_L="Registry Password"
 
-    T_STEP2_INFO="--- STEP 2: REGISTRATION ---"
+    T_STEP2_INFO="--- INSTANCE REGISTRATION ---"
     T_STEP2_EXIST="[ERROR] Instance already exists (Code 409)."
 
-    # Captcha
+    # Captcha & VPN
     T_CAPTCHA_TITLE="--- RECAPTCHA SECURITY (GOOGLE) ---"
     T_CAPTCHA_ASK="Do you want to enable reCAPTCHA v3 protection? (y/N) : "
     T_CAPTCHA_TUTO="1. Go to: https://www.google.com/recaptcha/admin/create\n2. Create a key type 'reCAPTCHA v3'\n3. Add your domain: "
     T_CAPTCHA_SITE="Site Key"
     T_CAPTCHA_SECRET="Secret Key"
+    T_VPN_TITLE="--- VPN CONFIGURATION ---"
 
+    # Final
+    T_FINAL_STEP="[4/4] FINALIZATION"
     T_SUCCESS="CONGRATULATIONS! Configuration complete."
     T_ENV_LOAD="Existing configuration detected."
+    T_START_PROMPT="Do you want to start the application now? [Y/n] "
+    T_START_NOW="Starting immediately via start.sh..."
+    T_START_LATER="Skipped. You can start later using: ./start.sh"
+    T_START_MISSING="[ERROR] start.sh script not found."
 fi
 
-# --- VÉRIFICATION JQ ---
+# ==============================================================================
+# 1. VERIFICATIONS SYSTÈME (DOCKER & JQ)
+# ==============================================================================
+echo -e "\n${BLUE}$T_DOCKER_CHECK${NC}"
+
+# --- Check Docker ---
+if ! command -v docker &> /dev/null; then
+    echo -e "${YELLOW}$T_DOCKER_MISSING${NC}"
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    rm get-docker.sh
+    
+    if ! command -v docker &> /dev/null; then
+        echo -e "${RED}$T_DOCKER_ERR${NC}"; exit 1
+    fi
+    # Add current user to docker group (avoid sudo for docker)
+    # sudo usermod -aG docker $USER
+else
+    echo -e "${GREEN}[OK] Docker${NC}"
+fi
+
+# --- Check JQ ---
 if ! command -v jq &> /dev/null; then
     echo -e "${YELLOW}$T_JQ_MISSING${NC}"
     [ -f /etc/os-release ] && . /etc/os-release
@@ -126,11 +179,15 @@ if ! command -v jq &> /dev/null; then
     else
         echo -e "${RED}$T_JQ_OS_ERR${NC}"; exit 1
     fi
+else
+    echo -e "${GREEN}[OK] JQ${NC}"
 fi
 
 # ==============================================================================
-# 1. PRÉPARATION ET CHARGEMENT ANCIEN .ENV
+# 2. PRÉPARATION ET CHARGEMENT ANCIEN .ENV
 # ==============================================================================
+echo -e "\n${GREEN}$T_BASE_CONFIG${NC}"
+
 if [ -f .env ]; then
     echo -e "${CYAN}$T_ENV_LOAD${NC}"
     OLD_DOMAIN=$(grep "^ROUTE_DOMAIN=" .env | cut -d '=' -f2)
@@ -154,8 +211,6 @@ fi
 DB_PASSWORD=${OLD_DB_PASS:-$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 13)}
 ELASTIC_PASS=${OLD_ELASTIC_PASS:-$(openssl rand -base64 12 | tr -dc 'a-zA-Z0-9' | head -c 10)}
 
-echo -e "\n${GREEN}$T_BASE_CONFIG${NC}"
-
 # --- SAISIE ET NETTOYAGE DU DOMAINE ---
 read -p "$T_DOMAIN_P [${OLD_DOMAIN}] : " INPUT_DOMAIN
 DOMAIN_NAME=${INPUT_DOMAIN:-$OLD_DOMAIN}
@@ -166,7 +221,7 @@ read -p "$T_COMPANY_P [${OLD_COMPANY}] : " B_COMPANY; B_COMPANY=${B_COMPANY:-$OL
 read -p "$T_PASS_P [${OLD_SA_PASS}] : " B_SA_PASS; B_SA_PASS=${B_SA_PASS:-$OLD_SA_PASS}
 
 # ==============================================================================
-# 2. TEST DNS (NON BLOQUANT)
+# 3. TEST DNS (NON BLOQUANT)
 # ==============================================================================
 echo -e "\n${GREEN}$T_DNS_TITLE${NC}"
 PUBLIC_IP=$(curl -s https://api.ipify.org || echo "127.0.0.1")
@@ -191,14 +246,13 @@ done
 if [ "$DNS_ERROR" = true ]; then
     echo -e "\n${RED}$T_DNS_WARN${NC}"
     read -p "$T_DNS_CONT" FORCE_DNS
-    # Si la réponse n'est pas o, O, y, Y, on quitte. Sinon on continue.
     if [[ ! "$FORCE_DNS" =~ ^[oOeyY]$ ]]; then
-        echo "Arrêt du script."; exit 1;
+        echo "STOP."; exit 1;
     fi
 fi
 
 # ==============================================================================
-# 3. ÉTAPE 1 : OBTENTION DES TOKENS
+# 4. ÉTAPE 1 : OBTENTION DES TOKENS
 # ==============================================================================
 echo -e "\n${BLUE}$T_STEP1_INFO${NC}"
 echo -e "$T_STEP1_DESC"
@@ -226,7 +280,7 @@ elif [[ "$TOKEN_HTTP" == "409" ]]; then
     AUTO_REG_PASS=""
 
 else
-    echo -e "${RED}[ERREUR] Step 1 failed (HTTP $TOKEN_HTTP).${NC}"
+    echo -e "${RED}[ERROR] Step 1 failed (HTTP $TOKEN_HTTP).${NC}"
     echo "$TOKEN_RES" | jq '.'
     exit 1
 fi
@@ -261,7 +315,7 @@ while [[ -z "$REGISTRY_TOKEN" ]]; do
 done
 
 # ==============================================================================
-# 4. ÉTAPE 2 : REGISTER (AVEC PARTNER TOKEN)
+# 5. ÉTAPE 2 : REGISTER (AVEC PARTNER TOKEN)
 # ==============================================================================
 echo -e "\n${BLUE}$T_STEP2_INFO${NC}"
 
@@ -281,7 +335,6 @@ if [[ "$REG_HTTP" =~ ^20[0-1]$ ]]; then
     echo -e "${GREEN}[OK] Success.${NC}"
 
 elif [[ "$REG_HTTP" == "409" ]]; then
-    # GESTION SPÉCIFIQUE 409 - DOMAINE EXISTANT
     SERVER_MSG=$(echo "$REG_RES" | jq -r '.message // "Unknown Error"')
     echo -e "${YELLOW}$T_STEP2_EXIST${NC}"
     echo -e "${YELLOW}$SERVER_MSG${NC}"
@@ -293,39 +346,31 @@ elif [[ "$REG_HTTP" == "409" ]]; then
         echo -e "${RED}[STOP] No master_token available. Exiting.${NC}"
         exit 1
     fi
-
 else
-    echo -e "${RED}[ERREUR] Step 2 failed (HTTP $REG_HTTP).${NC}"
+    echo -e "${RED}[ERROR] Step 2 failed (HTTP $REG_HTTP).${NC}"
     echo "$REG_RES" | jq '.'
     exit 1
 fi
 
 # ==============================================================================
-# 5. SÉCURITÉ RECAPTCHA (SEPARÉE)
+# 6. SÉCURITÉ RECAPTCHA & VPN
 # ==============================================================================
 echo -e "\n${BLUE}$T_CAPTCHA_TITLE${NC}"
 read -p "$T_CAPTCHA_ASK" ENABLE_CAPTCHA
 
 if [[ "$ENABLE_CAPTCHA" =~ ^[oOeyY]$ ]]; then
-
     echo -e "${YELLOW}$T_CAPTCHA_TUTO $RAW_DOMAIN ${NC}"
     echo ""
-
     read -p "$T_CAPTCHA_SITE [${OLD_CAPTCHA_SITE}] : " IN_CAPTCHA_SITE
     CAPTCHA_SITE_KEY=${IN_CAPTCHA_SITE:-$OLD_CAPTCHA_SITE}
-
     read -p "$T_CAPTCHA_SECRET [${OLD_CAPTCHA_SECRET}] : " IN_CAPTCHA_SECRET
     CAPTCHA_SECRET_KEY=${IN_CAPTCHA_SECRET:-$OLD_CAPTCHA_SECRET}
 else
-    # Si non, on garde vide ou l'ancien si on ne veut pas écraser
     CAPTCHA_SITE_KEY=$OLD_CAPTCHA_SITE
     CAPTCHA_SECRET_KEY=$OLD_CAPTCHA_SECRET
 fi
 
-# ==============================================================================
-# 6. CONFIGURATION VPN
-# ==============================================================================
-echo -e "\n${YELLOW}--- CONFIGURATION VPN ---${NC}"
+echo -e "\n${YELLOW}$T_VPN_TITLE${NC}"
 read -p "VPN Gateway IP [${OLD_VPN_IP:-10.16.0.1}] : " V_IP; VPN_SERVER_IP=${V_IP:-${OLD_VPN_IP:-10.16.0.1}}
 read -p "VPN Network [${OLD_VPN_NET:-10.16.0.0}] : " V_NET; VPN_NETWORK=${V_NET:-${OLD_VPN_NET:-10.16.0.0}}
 read -p "VPN Mask [${OLD_VPN_MASK:-255.255.0.0}] : " V_MASK; VPN_NETMASK=${V_MASK:-${OLD_VPN_MASK:-255.255.0.0}}
@@ -335,7 +380,8 @@ read -p "VPN Port [${OLD_VPN_PORT:-1194}] : " V_PORT; VPN_PORT=${V_PORT:-${OLD_V
 # ==============================================================================
 # 7. GÉNÉRATION .ENV (STRUCTURE COMPLÈTE)
 # ==============================================================================
-echo -e "\n${BLUE}Generating complete .env file...${NC}"
+echo -e "\n${BLUE}$T_FINAL_STEP${NC}"
+echo -e "Generating .env..."
 
 cat > .env <<EOF
 # =====================================================
@@ -456,4 +502,23 @@ else
 fi
 
 echo -e "\n${GREEN}$T_SUCCESS${NC}"
-echo -e "${YELLOW}You can now run: docker-compose up -d${NC}"
+
+# =====================================================
+# 9. PROPOSITION DE DÉMARRAGE
+# =====================================================
+if [ -f "start.sh" ]; then
+    chmod +x start.sh
+    echo ""
+    read -p "$T_START_PROMPT" confirm_start
+    confirm_start=${confirm_start:-Y} # Default Y
+
+    if [[ "$confirm_start" =~ ^[yY] ]]; then
+        echo -e "${YELLOW}$T_START_NOW${NC}"
+        echo -e "----------------------------------------------"
+        ./start.sh
+    else
+        echo -e "\n${YELLOW}$T_START_LATER${NC}"
+    fi
+else
+    echo -e "${RED}$T_START_MISSING${NC}"
+fi

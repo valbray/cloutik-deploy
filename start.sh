@@ -44,33 +44,6 @@ if [ ! -f .env ]; then
 fi
 
 # ==============================================================================
-# 3. RÉCUPÉRATION DU TOKEN
-# ==============================================================================
-HARBOR_TOKEN=$(grep "^HARBOR_TOKEN_MEMO=" .env | cut -d '=' -f2)
-
-if [ -z "$HARBOR_TOKEN" ]; then
-    echo -e "\n${RED}[ERREUR] Token de licence introuvable dans le fichier .env${NC}"
-    echo "Relancez ./install.sh pour configurer la licence."
-    exit 1
-fi
-
-# ==============================================================================
-# 4. CONNEXION HARBOR
-# ==============================================================================
-echo -e "\n${BLUE}Connexion au Registre Docker...${NC}"
-
-# On tente le login (stderr redirigé vers null pour cacher le warning password)
-echo "$HARBOR_TOKEN" | docker login registry.cloutik.app -u "robot\$cloutik+prod-deploy" --password-stdin > /dev/null 2>&1
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}[ERREUR] Échec de l'authentification.${NC}"
-    echo "Votre token est peut-être invalide ou expiré."
-    exit 1
-else
-    echo -e "${GREEN}[OK] Connexion réussie.${NC}"
-fi
-
-# ==============================================================================
 # 5. LANCEMENT DE LA STACK
 # ==============================================================================
 echo -e "\n${BLUE}Téléchargement des images (Pull)...${NC}"
