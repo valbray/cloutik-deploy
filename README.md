@@ -24,7 +24,7 @@ git clone https://github.com/valbray/cloutik-deploy.git
 cd cloutik-deploy
 
 # 2. Make scripts executable
-chmod +x install.sh start.sh
+chmod +x install.sh start.sh update.sh
 
 # 3. Run the Installation Wizard
 ./install.sh
