@@ -20,7 +20,7 @@ To deploy Cloutik on a fresh server, simply clone this repository and run the in
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/votre-org/cloutik-deploy.git](https://github.com/votre-org/cloutik-deploy.git)
+git clone https://github.com/valbray/cloutik-deploy.git
 cd cloutik-deploy
 
 # 2. Make scripts executable
