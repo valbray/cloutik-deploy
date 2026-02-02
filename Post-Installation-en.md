@@ -96,7 +96,6 @@ Fill in the following parameters for the account that will send alerts:
 * **Email STMP Secure** (`clk_mailsmtpsecure`): Encryption (`ssl` or `tls`).
 * **Notification SMTP Port** (`clk_ntsmtppt`): SMTP Port.
 * **Monitoring Mail** (`clk_monitoring_mail`): Alert reception address.
-    * **⚠️ Important:** By default, this field contains `superadmin@valbray.fr`. You must replace it with your own address.
 
 > **✅ Required Action:** Click **"Update and test notification parameters"** to verify that you receive the test aler.
 
@@ -128,5 +127,29 @@ Choose the method that suits your workflow:
 1.  Download the generated `.rsc` file from the Cloutik interface.
 2.  Upload this file to your MikroTik's **Files** directory.
 3.  Open a terminal and execute: `/import Cloutik.rsc`
+
+---
+
+## 👤 5. User & License Management
+
+Manage your administrative accounts and their rights.
+
+### A. Default Super Admin & Free License
+During the initial installation (`install.sh`), a **Super Admin** account was automatically created using the information you provided.
+By default, this account is assigned a **Free License** limited to **2 devices**.
+
+### B. Modifying the License
+If you wish to upgrade this user's plan:
+1.  Go to `Licenses` > `Accounts`.
+2.  Click the **Edit** button on the user row.
+3.  Select a new license from the list (pulled from your License Catalog).
+4.  Click **Save**.
+
+### C. Creating New Users
+You can create as many users as needed (for your team or clients):
+1.  Go to `Licenses` > `Accounts` > `ADD`.
+* Assign them a specific license from your catalog during creation.
+
+> **💡 Note:** You can also customize your license offers (device limits) by going to `Administration` > `License Catalog`.
 
 ---
