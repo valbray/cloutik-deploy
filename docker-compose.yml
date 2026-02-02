@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Configuration globale pour la rotation des logs (Driver par défaut)
 x-logging: &default-logging
   driver: "json-file"
