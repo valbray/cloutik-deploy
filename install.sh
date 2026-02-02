@@ -228,7 +228,7 @@ PUBLIC_IP=$(curl -s https://api.ipify.org || echo "127.0.0.1")
 echo -e "$T_DNS_IP ${BLUE}$PUBLIC_IP${NC}"
 
 DNS_ERROR=false
-DOMAINS_TO_CHECK=("$RAW_DOMAIN" "api.$RAW_DOMAIN" "api-interf.$RAW_DOMAIN" "api-admin.$RAW_DOMAIN")
+DOMAINS_TO_CHECK=("$RAW_DOMAIN" "api.$RAW_DOMAIN" "api-interf.$RAW_DOMAIN" "api-admin.$RAW_DOMAIN" "webfig.$RAW_DOMAIN")
 
 for d in "${DOMAINS_TO_CHECK[@]}"; do
     RESOLVED_IP=$(getent hosts "$d" | awk '{ print $1 }' | head -n 1)
