@@ -480,6 +480,11 @@ RADIUS_DEBUG=false
 # =====================================================
 # OTHERS
 # =====================================================
+MONITORING_ALERT==false
+QUEUE_CONNECTION=database
+CACHE_DRIVER=file
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
 FTP_PASSIVEPORTS="30000-30599"
 FTP_BASE_DIRECTORY=/var/www/html/cloutik
 TAG=1.0
