@@ -117,14 +117,6 @@ LOGIN_URL="${APP_URL}/login"
 # ==============================================================================
 echo -e "\n${BLUE}$T_PHASE1${NC}"
 
-
-mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache logs/laravel
-
-sudo chown -R 33:33 storage bootstrap/cache logs/laravel 2>/dev/null || chown -R 33:33 storage bootstrap/cache logs/laravel
-sudo chmod -R 775 storage bootstrap/cache logs/laravel 2>/dev/null || chmod -R 775 storage bootstrap/cache logs/laravel
-
-
-
 # 1. TÉLÉCHARGEMENT
 echo -e "${CYAN}$T_PULL${NC}"
 $COMPOSE pull
@@ -192,6 +184,13 @@ spinner $PID
 wait $PID
 
 echo -e "${GREEN}[OK]${NC}"
+
+mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache logs/laravel
+
+sudo chown -R 33:33 storage bootstrap/cache logs/laravel 2>/dev/null || chown -R 33:33 storage bootstrap/cache logs/laravel
+sudo chmod -R 775 storage bootstrap/cache logs/laravel 2>/dev/null || chmod -R 775 storage bootstrap/cache logs/laravel
+
+
 
 echo -e "\n${GREEN}==============================================${NC}"
 echo -e "${GREEN}   $T_SUCCESS             ${NC}"
