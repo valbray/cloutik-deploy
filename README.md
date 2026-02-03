@@ -13,6 +13,8 @@ Before running the installation, ensure your server meets the following requirem
     * `80/443` (HTTP/HTTPS for Web Interface)
     * `1194` (OpenVPN for Devices)
     * `5014` (Logstash / Syslog)
+* **Install Git:** Prequired to clone the repository
+
 
 ## 🚀 Quick Start
 
