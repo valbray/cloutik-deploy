@@ -295,10 +295,11 @@ services:
     networks:
       - cloutik-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
-      interval: 30s
-      retries: 5
-    # C'EST ICI QUE L'OPTIMISATION SE FAIT : IL ATTEND TOUT LE RESTE
+      # On teste l'API d'Elastic, pas juste le port
+      test: ["CMD", "curl", "-f", "-u", "elastic:${ELASTICSEARCH_PASS}", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=50s"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     depends_on:
       app:
         condition: service_started
@@ -321,6 +322,8 @@ services:
       - ELASTICSEARCH_USER=elastic
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASS}
       - LS_JAVA_OPTS=-Xmx1g -Xms1g
+      - MONITORING_ENABLED=false
+      - XPACK_MONITORING_ENABLED=false
     volumes:
       - logstash_data:/var/lib/logstash
     networks:
