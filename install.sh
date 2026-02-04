@@ -42,7 +42,7 @@ if [ "$LAN_CHOICE" == "2" ]; then
     
     # Base
     T_BASE_CONFIG="[2/4] CONFIGURATION DE BASE"
-    T_DOMAIN_P="Nom de domaine (ex: docker.cloutik.app)"
+    T_DOMAIN_P="Nom de domaine (ex: cloutik.domaine.com)"
     T_EMAIL_P="Email de facturation"
     T_COMPANY_P="Nom de l'entreprise"
     T_PASS_P="Mot de passe SuperAdmin"
