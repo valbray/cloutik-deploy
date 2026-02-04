@@ -140,6 +140,12 @@ else
     exit 1
 fi
 
+mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache logs/laravel
+
+sudo chown -R 33:33 storage bootstrap/cache logs/laravel 2>/dev/null || chown -R 33:33 storage bootstrap/cache logs/laravel
+sudo chmod -R 775 storage bootstrap/cache logs/laravel 2>/dev/null || chmod -R 775 storage bootstrap/cache logs/laravel
+
+
 # ==============================================================================
 # PHASE 2 : VÉRIFICATION DE SANTÉ (COMPTEUR)
 # ==============================================================================
