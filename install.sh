@@ -221,35 +221,70 @@ read -p "$T_COMPANY_P [${OLD_COMPANY}] : " B_COMPANY; B_COMPANY=${B_COMPANY:-$OL
 read -p "$T_PASS_P [${OLD_SA_PASS}] : " B_SA_PASS; B_SA_PASS=${B_SA_PASS:-$OLD_SA_PASS}
 
 # ==============================================================================
-# 3. TEST DNS (NON BLOQUANT)
+# 3. TEST DNS (BOUCLE DE VÉRIFICATION)
 # ==============================================================================
 echo -e "\n${GREEN}$T_DNS_TITLE${NC}"
 PUBLIC_IP=$(curl -s https://api.ipify.org || echo "127.0.0.1")
 echo -e "$T_DNS_IP ${BLUE}$PUBLIC_IP${NC}"
 
-DNS_ERROR=false
 DOMAINS_TO_CHECK=("$RAW_DOMAIN" "api.$RAW_DOMAIN" "api-interf.$RAW_DOMAIN" "api-admin.$RAW_DOMAIN" "webfig.$RAW_DOMAIN" "vpn.$RAW_DOMAIN" )
 
-for d in "${DOMAINS_TO_CHECK[@]}"; do
-    RESOLVED_IP=$(getent hosts "$d" | awk '{ print $1 }' | head -n 1)
-    if [ -z "$RESOLVED_IP" ]; then
-        echo -e "  [${RED}KO${NC}] $d : $T_DNS_RESOLVE_ERR"
-        DNS_ERROR=true
-    elif [ "$RESOLVED_IP" != "$PUBLIC_IP" ]; then
-        echo -e "  [${YELLOW}WARN${NC}] $d : $RESOLVED_IP ($T_DNS_IP_ERR: $PUBLIC_IP)"
-        DNS_ERROR=true
-    else
-        echo -e "  [${GREEN}OK${NC}] $d : $RESOLVED_IP"
-    fi
-done
+while true; do
+    DNS_ERROR=false
+    echo -e "\n--- Checking DNS Records ---"
 
-if [ "$DNS_ERROR" = true ]; then
-    echo -e "\n${RED}$T_DNS_WARN${NC}"
-    read -p "$T_DNS_CONT" FORCE_DNS
-    if [[ ! "$FORCE_DNS" =~ ^[oOeyY]$ ]]; then
-        echo "STOP."; exit 1;
+    for d in "${DOMAINS_TO_CHECK[@]}"; do
+        # On tente de résoudre le domaine
+        RESOLVED_IP=$(getent hosts "$d" | awk '{ print $1 }' | head -n 1)
+
+        if [ -z "$RESOLVED_IP" ]; then
+            echo -e "  [${RED}KO${NC}] $d : $T_DNS_RESOLVE_ERR"
+            DNS_ERROR=true
+        elif [ "$RESOLVED_IP" != "$PUBLIC_IP" ]; then
+            echo -e "  [${YELLOW}WARN${NC}] $d : $RESOLVED_IP ($T_DNS_IP_ERR: $PUBLIC_IP)"
+            DNS_ERROR=true
+        else
+            echo -e "  [${GREEN}OK${NC}] $d : $RESOLVED_IP"
+        fi
+    done
+
+    # Si tout est OK, on sort de la boucle automatiquement
+    if [ "$DNS_ERROR" = false ]; then
+        echo -e "${GREEN}[OK] DNS Validated.${NC}"
+        break
     fi
-fi
+
+    # Sinon, on affiche le menu d'erreur
+    echo -e "\n${RED}$T_DNS_WARN${NC}"
+    
+    if [ "$L" == "FR" ]; then
+        echo "  1) Réessayer la vérification (après mise à jour DNS)"
+        echo "  2) Continuer quand même (Forcer)"
+        echo "  3) Quitter l'installation"
+        read -p "  Votre choix [1-3] : " DNS_ACTION
+    else
+        echo "  1) Retry verification (after DNS update)"
+        echo "  2) Continue anyway (Force)"
+        echo "  3) Quit installation"
+        read -p "  Choice [1-3] : " DNS_ACTION
+    fi
+
+    case $DNS_ACTION in
+        1)
+            echo -e "${YELLOW}Mise à jour... (Patientez quelques secondes)${NC}"
+            sleep 2
+            continue # Relance la boucle while
+            ;;
+        2)
+            echo -e "${YELLOW}Force Continue...${NC}"
+            break # Sort de la boucle et continue le script
+            ;;
+        *)
+            echo "STOP."
+            exit 1
+            ;;
+    esac
+done
 
 # ==============================================================================
 # 4. ÉTAPE 1 : OBTENTION DES TOKENS
