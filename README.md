@@ -6,7 +6,8 @@ This repository contains the automated scripts required to install, configure, a
 ## 📋 Prerequisites
 
 Before running the installation, ensure your server meets the following requirements:
-
+* **CPU:** 4-6 vCPUs/Cores
+* **RAM:** 8-12 GB 
 * **OS:** Ubuntu 20.04/22.04/24.04 (Recommended) or Debian 11/12.
 * **Permissions:** Root access or a user with `sudo` privileges.
 * **Connectivity:** Public IP address with open ports:
