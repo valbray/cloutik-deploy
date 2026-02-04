@@ -321,11 +321,10 @@ services:
       - ELASTICSEARCH_PORT=9200
       - ELASTICSEARCH_USER=elastic
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASS}
-      - LS_JAVA_OPTS=-Xmx1g -Xms1g
-      - MONITORING_ENABLED=false
-      - PIPELINE_WORKERS=2
-      - PIPELINE_BATCH_SIZE=125
-      - XPACK_MONITORING_ENABLED=false
+      - "LS_JAVA_OPTS=-Xmx1g -Xms1g"
+      - "PIPELINE_WORKERS=2"
+      - "MONITORING_ENABLED=false"
+      - "XPACK_MONITORING_ENABLED=false"
     volumes:
       - logstash_data:/var/lib/logstash
     networks:
