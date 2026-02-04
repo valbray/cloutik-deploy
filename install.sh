@@ -103,7 +103,7 @@ else
 
     # Base
     T_BASE_CONFIG="[2/4] BASE CONFIGURATION"
-    T_DOMAIN_P="Domain Name (e.g., docker.cloutik.app)"
+    T_DOMAIN_P="Domain Name (e.g., cloutik.domaine.com)"
     T_EMAIL_P="Billing Email"
     T_COMPANY_P="Company Name"
     T_PASS_P="SuperAdmin Password"
