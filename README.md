@@ -3,6 +3,8 @@
 Welcome to the official deployment repository for **Cloutik**, the MikroTik Fleet Management Solution.
 This repository contains the automated scripts required to install, configure, and launch the Cloutik On-Premise Docker stack.
 
+Cloutik is deployed as a Docker Compose stack running on a single server or virtual machine.
+
 ## 📋 Prerequisites
 
 Before running the installation, ensure your server meets the following requirements:
